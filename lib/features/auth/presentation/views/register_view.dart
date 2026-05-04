@@ -16,6 +16,7 @@ class RegisterView extends StatefulWidget {
 }
 
 class _RegisterViewState extends State<RegisterView> {
+  final _formKey = GlobalKey<FormState>();
   final _ownerNameController = TextEditingController();
   final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
@@ -24,22 +25,22 @@ class _RegisterViewState extends State<RegisterView> {
   final _passwordController = TextEditingController();
 
   void _handleRegisterClick() {
-    if (_mobileController.text.isEmpty) return;
-    
-    // Step 1: Send OTP for registration
-    context.read<AuthBloc>().add(
-          SendOtpRequested(_mobileController.text, 'REGISTRATION'),
-        );
+    if (_formKey.currentState?.validate() ?? false) {
+      // Step 1: Send OTP for registration
+      context.read<AuthBloc>().add(
+            SendOtpRequested(_mobileController.text, 'REGISTRATION'),
+          );
+    }
   }
 
   void _completeRegistration() {
     final data = {
-      'name': _ownerNameController.text,
-      'mobileNo': _mobileController.text,
-      'email': _emailController.text,
+      'name': _ownerNameController.text.trim(),
+      'mobileNo': _mobileController.text.trim(),
+      'email': _emailController.text.trim(),
       'password': _passwordController.text,
-      'gstNumber': _gstController.text.isEmpty ? null : _gstController.text,
-      'licenseNumber': _licenseController.text,
+      'gstNumber': _gstController.text.trim().isEmpty ? null : _gstController.text.trim(),
+      'licenseNumber': _licenseController.text.trim(),
     };
     context.read<AuthBloc>().add(RegisterRequested(data));
   }
@@ -67,36 +68,84 @@ class _RegisterViewState extends State<RegisterView> {
       },
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            _buildTextField(controller: _ownerNameController, label: 'Owner Name', icon: Icons.person_outline),
-            const SizedBox(height: 16),
-            _buildTextField(controller: _mobileController, label: 'Mobile Number', icon: Icons.phone_android_outlined, keyboardType: TextInputType.phone),
-            const SizedBox(height: 16),
-            _buildTextField(controller: _emailController, label: 'Email', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress),
-            const SizedBox(height: 16),
-            _buildTextField(controller: _passwordController, label: 'Password', icon: Icons.lock_outline, isPassword: true),
-            const SizedBox(height: 16),
-            _buildTextField(controller: _gstController, label: 'GST Number (Optional)', icon: Icons.business_outlined),
-            const SizedBox(height: 16),
-            _buildTextField(controller: _licenseController, label: 'License Number', icon: Icons.assignment_outlined),
-            const SizedBox(height: 32),
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                return SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: state is AuthLoading ? null : _handleRegisterClick,
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary, foregroundColor: Colors.white),
-                    child: state is AuthLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('REGISTER & VERIFY'),
-                  ),
-                );
-              },
-            ),
-          ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildTextField(
+                controller: _ownerNameController, 
+                label: 'Owner Name', 
+                icon: Icons.person_outline,
+                validator: (val) => (val == null || val.length < 2) ? 'Name must be at least 2 characters' : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _mobileController, 
+                label: 'Mobile Number', 
+                icon: Icons.phone_android_outlined, 
+                keyboardType: TextInputType.phone,
+                validator: (val) => (val == null || !RegExp(r'^[6-9]\d{9}$').hasMatch(val)) ? 'Invalid Indian mobile number' : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _emailController, 
+                label: 'Email', 
+                icon: Icons.email_outlined, 
+                keyboardType: TextInputType.emailAddress,
+                validator: (val) => (val == null || !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val)) ? 'Invalid email address' : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _passwordController, 
+                label: 'Password', 
+                icon: Icons.lock_outline, 
+                isPassword: true,
+                validator: (val) {
+                  if (val == null || val.length < 8) return 'Password must be at least 8 characters';
+                  if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])').hasMatch(val)) {
+                    return 'Must contain uppercase, lowercase, number, and special character';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _gstController, 
+                label: 'GST Number (Optional)', 
+                icon: Icons.business_outlined,
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) return null;
+                  if (!RegExp(r'^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}$').hasMatch(val)) {
+                    return 'Invalid GST number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _licenseController, 
+                label: 'License Number', 
+                icon: Icons.assignment_outlined,
+                validator: (val) => (val == null || val.length < 3) ? 'License number is required' : null,
+              ),
+              const SizedBox(height: 32),
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: state is AuthLoading ? null : _handleRegisterClick,
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary, foregroundColor: Colors.white),
+                      child: state is AuthLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('REGISTER & VERIFY'),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -108,11 +157,14 @@ class _RegisterViewState extends State<RegisterView> {
     required IconData icon,
     bool isPassword = false,
     TextInputType? keyboardType,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
       keyboardType: keyboardType,
+      validator: validator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon)),
     );
   }

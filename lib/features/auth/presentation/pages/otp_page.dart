@@ -32,13 +32,21 @@ class OtpPage extends StatelessWidget {
           if (state is OtpVerifiedSuccess) {
             onVerified();
           } else if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-            );
+            if (ModalRoute.of(context)?.isCurrent == true) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+                );
+            }
           } else if (state is OtpSentSuccess) {
-             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('OTP sent again!'), backgroundColor: AppColors.primary),
-            );
+             if (ModalRoute.of(context)?.isCurrent == true) {
+               ScaffoldMessenger.of(context)
+                 ..hideCurrentSnackBar()
+                 ..showSnackBar(
+                   const SnackBar(content: Text('OTP sent again!'), backgroundColor: AppColors.primary),
+                 );
+             }
           }
         },
         child: OtpView(mobileNo: mobileNo, type: type),
