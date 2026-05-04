@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -62,7 +63,22 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   String _handleError(dynamic e) {
-    // Simple error extractor for production
+    if (e is DioException) {
+      if (e.response != null && e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map<String, dynamic>) {
+          // Check for validation errors array
+          if (data['errors'] != null && data['errors'] is List && data['errors'].isNotEmpty) {
+            return data['errors'][0]['message'] ?? 'Validation error';
+          }
+          // Check for general message
+          if (data['message'] != null) {
+            return data['message'];
+          }
+        }
+      }
+      return e.message ?? 'Network error occurred';
+    }
     if (e is Exception) return e.toString().replaceAll('Exception: ', '');
     return 'An unexpected error occurred';
   }
