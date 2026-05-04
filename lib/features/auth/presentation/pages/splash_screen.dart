@@ -71,7 +71,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   ],
                 ),
                 child: Padding(
-                  padding: const Offset(20, 20),
+                  padding: const EdgeInsets.all(20),
                   child: Image.asset('assets/images/logo.png'),
                 ),
               ),

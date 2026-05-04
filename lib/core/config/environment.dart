@@ -11,7 +11,11 @@ class Environment {
   bool get debugLogging => dotenv.get('DEBUG_LOGGING', fallback: 'false').toLowerCase() == 'true';
   String get appName => dotenv.get('APP_NAME', fallback: 'MediVyapar');
 
+  static late EnvironmentType _currentEnv;
+  static EnvironmentType get current => _currentEnv;
+
   static Future<void> init(EnvironmentType env) async {
+    _currentEnv = env;
     final fileName = env == EnvironmentType.dev ? ".env.development" : ".env";
     await dotenv.load(fileName: fileName);
   }

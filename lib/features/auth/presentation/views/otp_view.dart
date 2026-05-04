@@ -72,13 +72,16 @@ class _OtpViewState extends State<OtpView> {
             enableActiveFill: true,
             onChanged: (value) {},
             onCompleted: (value) {
-              context.read<AuthBloc>().add(
-                    VerifyOtpRequested(
-                      target: widget.mobileNo,
-                      code: value,
-                      type: widget.type,
-                    ),
-                  );
+              final state = context.read<AuthBloc>().state;
+              if (state is! AuthLoading) {
+                context.read<AuthBloc>().add(
+                      VerifyOtpRequested(
+                        target: widget.mobileNo,
+                        code: value,
+                        type: widget.type,
+                      ),
+                    );
+              }
             },
           ),
           const SizedBox(height: 32),
