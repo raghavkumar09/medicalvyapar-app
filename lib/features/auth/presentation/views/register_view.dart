@@ -5,10 +5,11 @@ import '../../../../core/constants/app_colors.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import 'otp_page.dart';
+import '../pages/otp_page.dart';
 
 class RegisterView extends StatefulWidget {
-  const RegisterView({super.key});
+  final VoidCallback? onRegisterComplete;
+  const RegisterView({super.key, this.onRegisterComplete});
 
   @override
   State<RegisterView> createState() => _RegisterViewState();
